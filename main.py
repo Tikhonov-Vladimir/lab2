@@ -72,11 +72,11 @@ answers = [answer_in, answer_not_in, answer_more, answer_equal]
 def run_dialog():
     print(dialog['greeting'][0])
     questions = dialog['questions']
-    for i in range(len(questions)):
-        answer = input(questions[i])
-        for j in answers:
-            if question[i] in j:
-                j[question[i]] = answer
+    for k in range(len(questions)):
+        ans = input(questions[k])
+        for an in answers:
+            if question[k] in an:
+                an[question[k]] = ans
 
 
 run_dialog()
@@ -100,7 +100,7 @@ with open('anime.csv', newline='', encoding='utf-8') as csvfile:
                     good = False
         for i in answer_not_in:
             for j in answer_not_in[i].split():
-                if (j in row[i]):
+                if j in row[i]:
                     good = False
         if good:
             if row['Rating Score'] == 'Unknown':
