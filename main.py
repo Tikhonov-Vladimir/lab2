@@ -2,39 +2,24 @@ import csv
 import requests
 from bs4 import BeautifulSoup
 
+p = ' Пожалуйста, пишите на английском!'
+e = ' Если данный параметр вам не важен, ведите Enter.'
 dialog = {
     'greeting': ['Здравствуйте! Давайте подберем вам анимэ!'],
-    'questions': ['Какой жанр вас интересует? \
-Пожалуйста, пишите на английском! \
-Если данный параметр вам не важен, ведите Enter.',
-                  'Какая минимальная оценка? \
-Если у вас вещественное число, пишите его через точку. \
-Если данный параметр вам не важен, ведите Enter.',
-                  'Какое минимальное количество отзывов должно быть? \
-Если данный параметр вам не важен, ведите Enter.',
-                  'Каких предупреждений не должно быть? \
-Пожалуйста, пишите на английском!. \
-Если данный параметр вам не важен, ведите Enter.',
-                  'Какой формат анимэ вас устроит? \
-Пожалуйста, пишите на английском! \
-Если данный параметр вам не важен, ведите Enter.',
-                  'Какое минимальное количество эпизодов? \
-Если данный параметр вам не важен, ведите Enter.',
-                  'Анимэ должно быть закончено? \
-Введите True или False. \
-Если данный параметр вам не важен, ведите Enter.',
-                  'Какой год начала съемки анимэ вас интересует? \
-Если данный параметр вам не важен, ведите Enter.',
-                  'Какой год окончания съемки анимэ вас интересует? \
-Если данный параметр вам не важен, ведите Enter.',
-                  'Какой сезон съемки анимэ вам нужен? \
-Пожалуйста, пишите на английском! \
-Если данный параметр вам не важен, ведите Enter.',
-                  'Какая студия вас интересует? \
-Если данный параметр вам не важен, ведите Enter.'
-                  ]
+    'questions': ('Какой жанр вас интересует?' + p + e,
+                  'Какая минимальная оценка? Если у вас вещественное число, пишите его через точку.' + e,
+                  'Какое минимальное количество отзывов должно быть?' + e,
+                  'Каких предупреждений не должно быть?' + p + e,
+                  'Какой формат анимэ вас устроит?' + p + e,
+                  'Какое минимальное количество эпизодов?' + e,
+                  'Анимэ должно быть закончено? Введите True или False.' + e,
+                  'Какой год начала съемки анимэ вас интересует?' + e,
+                  'Какой год окончания съемки анимэ вас интересует?' + e,
+                  'Какой сезон съемки анимэ вам нужен?' + p + e,
+                  'Какая студия вас интересует?' + p + e
+                  )
 }
-question = [
+question = (
     'Tags',
     'Rating Score',
     'Number Votes',
@@ -46,13 +31,12 @@ question = [
     'EndYear',
     'Season',
     'Studios'
-]
+)
 answer_equal = {
     'Type': '',
     'Finished': '',
     'StartYear': '',
-    'EndYear': '',
-    'Studios': ''
+    'EndYear': ''
 }
 answer_more = {
     'Rating Score': '',
@@ -61,7 +45,8 @@ answer_more = {
 }
 answer_in = {
     'Tags': '',
-    'Season': ''
+    'Season': '',
+    'Studios': ''
 }
 answer_not_in = {
     'Content Warning': ''
@@ -69,39 +54,61 @@ answer_not_in = {
 answers = [answer_in, answer_not_in, answer_more, answer_equal]
 
 
-def run_dialog():
-    print(dialog['greeting'][0])
+def save_answer(ans, q_type, answers):
+    for answer_gr in answers:
+        if q_type in answer_gr:
+            answer_gr[q_type] = ans
+
+
+def run_dialog(answers, dialog):
+    print(*dialog['greeting'])
     questions = dialog['questions']
     for k in range(len(questions)):
         ans = input(questions[k])
-        for an in answers:
-            if question[k] in an:
-                an[question[k]] = ans
+        save_answer(ans, question[k], answers)
 
 
-run_dialog()
+def is_equal(answer_in, entry):
+    return True if answer_in in ('', entry) else False
+
+
+def is_more(answer_in, entry):
+    if answer_in == '':
+        answer_in = float(0)
+    if entry == 'Unknown':
+        entry = float(0)
+    return True if float(answer_in) <= float(entry) else False
+
+
+def is_in(answer_in, entry):
+    return True if answer_in in entry else False
+
+
+def is_not_in(answer_in, entry):
+    return False if answer_in in entry else True
+
+
+run_dialog(answers, dialog)
 answer = []
+
 with open('anime.csv', newline='', encoding='utf-8') as csvfile:
     reader = csv.DictReader(csvfile)
     for row in reader:
         good = True
-        for i in answer_equal:
-            if answer_equal[i] != row[i] and answer_equal[i] != '':
-                good = False
-        for i in answer_more:
-            if answer_more[i] != '':
-                if row[i] == 'Unknown':
-                    good = False
-                elif float(answer_more[i]) > float(row[i]):
-                    good = False
-        for i in answer_in:
-            for j in answer_in[i].split():
-                if not (j in row[i]):
-                    good = False
-        for i in answer_not_in:
-            for j in answer_not_in[i].split():
-                if j in row[i]:
-                    good = False
+        for key, val in answer_equal.items():
+            good = good & is_equal(val, row[key])
+
+        for key, val in answer_more.items():
+            good = good & is_more(val, row[key])
+
+        for key, val in answer_in.items():
+            for j in val.split():
+                good = good & is_in(j, row[key])
+
+        for key, val in answer_not_in.items():
+            for j in val.split():
+                good = good & is_not_in(j, row[key])
+
         if good:
             if row['Rating Score'] == 'Unknown':
                 answer.append([float(0), row['Url'], row['Name']])
