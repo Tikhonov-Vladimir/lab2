@@ -96,18 +96,18 @@ with open('anime.csv', newline='', encoding='utf-8') as csvfile:
     for row in reader:
         good = True
         for key, val in answer_equal.items():
-            good = good & is_equal(val, row[key])
+            good = good and is_equal(val, row[key])
 
         for key, val in answer_more.items():
-            good = good & is_more(val, row[key])
+            good = good and is_more(val, row[key])
 
         for key, val in answer_in.items():
             for j in val.split():
-                good = good & is_in(j, row[key])
+                good = good and is_in(j, row[key])
 
         for key, val in answer_not_in.items():
             for j in val.split():
-                good = good & is_not_in(j, row[key])
+                good = good and is_not_in(j, row[key])
 
         if good:
             if row['Rating Score'] == 'Unknown':
